@@ -6,6 +6,16 @@ import { api } from "@/utils/api";
 const Home: NextPage = () => {
   const user = useUser();
 
+  const { data, isLoading, isError, error } = api.posts.getAll.useQuery();
+
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (isError) {
+    return <p>{error.message}</p>;
+  }
+
   return (
     <>
       <Head>
@@ -21,6 +31,15 @@ const Home: NextPage = () => {
             <SignInButton>Login</SignInButton>
           )}
         </div>
+        {data.length > 0 ? (
+          <ul>
+            {data.map((post) => (
+              <li key={post.id}>{post.content}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>No posts yet</p>
+        )}
       </main>
     </>
   );
