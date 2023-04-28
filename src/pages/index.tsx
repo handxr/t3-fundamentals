@@ -6,6 +6,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { type RouterOutputs, api } from "@/utils/api";
 import Image from "next/image";
 import { LoadingPage } from "@/components/loading";
+import toast from "react-hot-toast";
 
 dayjs.extend(relativeTime);
 
@@ -17,6 +18,9 @@ const CreatePostWizard = () => {
   const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
     onSuccess: async () => {
       await ctx.posts.getAll.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message);
     },
   });
 
