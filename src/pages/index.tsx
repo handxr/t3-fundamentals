@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { type RouterOutputs, api } from "@/utils/api";
 import Image from "next/image";
+import { LoadingPage } from "@/components/loading";
 
 dayjs.extend(relativeTime);
 
@@ -22,7 +23,10 @@ const CreatePostWizard = () => {
         width={48}
         height={48}
       />
-      <input placeholder="Type some emojis!" className="grow bg-transparent" />
+      <input
+        placeholder="Type something fun!"
+        className="grow bg-transparent"
+      />
     </div>
   );
 };
@@ -56,18 +60,29 @@ const PostView = (props: PostWithUser) => {
   );
 };
 
-const Home: NextPage = () => {
-  const user = useUser();
-
+const Feed = () => {
   const { data, isLoading, isError, error } = api.posts.getAll.useQuery();
 
-  if (isLoading) {
-    return <p>Loading...</p>;
-  }
+  if (isLoading) return <LoadingPage />;
 
   if (isError) {
     return <p>{error.message}</p>;
   }
+
+  return (
+    <ul className="flex flex-col">
+      {data.map((item) => (
+        <PostView key={item.post.id} {...item} />
+      ))}
+    </ul>
+  );
+};
+
+const Home: NextPage = () => {
+  const { isLoaded, isSignedIn } = useUser();
+  api.posts.getAll.useQuery();
+
+  if (!isLoaded) return <div />;
 
   return (
     <>
@@ -80,21 +95,13 @@ const Home: NextPage = () => {
         <div className="w-full border-x border-slate-400  md:max-w-2xl">
           {" "}
           <div className="j flex border-b border-slate-400 p-4">
-            {user.isSignedIn ? (
+            {isSignedIn ? (
               <CreatePostWizard />
             ) : (
               <SignInButton>Login</SignInButton>
             )}
           </div>
-          {data.length > 0 ? (
-            <ul className="flex flex-col">
-              {data.map((item) => (
-                <PostView key={item.post.id} {...item} />
-              ))}
-            </ul>
-          ) : (
-            <p>No posts yet</p>
-          )}
+          <Feed />
         </div>
       </main>
     </>
