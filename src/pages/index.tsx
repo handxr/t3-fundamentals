@@ -12,6 +12,14 @@ dayjs.extend(relativeTime);
 const CreatePostWizard = () => {
   const { user } = useUser();
 
+  const ctx = api.useContext();
+
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: async () => {
+      await ctx.posts.getAll.invalidate();
+    },
+  });
+
   if (!user) return null;
 
   return (
@@ -26,6 +34,13 @@ const CreatePostWizard = () => {
       <input
         placeholder="Type something fun!"
         className="grow bg-transparent"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            mutate({ content: e.currentTarget.value });
+            e.currentTarget.value = "";
+          }
+        }}
+        disabled={isPosting}
       />
     </div>
   );
