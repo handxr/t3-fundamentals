@@ -64,18 +64,6 @@ type PostWithAuthor = {
 
 export const postsRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
-    const cache = new LRUCache({
-      max: 500,
-      ttl: 1000 * 10,
-      updateAgeOnGet: true,
-    });
-    const postsInCache = cache.get("posts") as PostWithAuthor[];
-
-    if (postsInCache) {
-      console.log("returning from cache");
-      return postsInCache;
-    }
-
     const posts = await ctx.prisma.post.findMany({
       take: 100,
       orderBy: {
@@ -83,9 +71,8 @@ export const postsRouter = createTRPCRouter({
       },
     });
 
-    console.log("returning from db");
     const postsWithUserData = await addUserDataToPosts(posts);
-    cache.set("posts", postsWithUserData);
+
     return postsWithUserData;
   }),
 
@@ -96,16 +83,6 @@ export const postsRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const cache = new LRUCache({
-        max: 500,
-        ttl: 1000 * 10,
-        updateAgeOnGet: true,
-      });
-      if (cache.has(input.userId)) {
-        console.log("returning from cache");
-        return cache.get(input.userId) as PostWithAuthor[];
-      }
-
       const posts = await ctx.prisma.post.findMany({
         where: {
           authorId: input.userId,
@@ -118,7 +95,7 @@ export const postsRouter = createTRPCRouter({
 
       console.log("returning from db");
       const postsWithUserData = await addUserDataToPosts(posts);
-      cache.set(input.userId, postsWithUserData);
+
       return postsWithUserData;
     }),
 
