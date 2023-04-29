@@ -9,6 +9,12 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { type User } from "@clerk/nextjs/dist/api";
 import { TRPCError } from "@trpc/server";
 
+const cache = new LRUCache({
+  max: 500,
+  ttl: 1000 * 10,
+  updateAgeOnGet: true,
+});
+
 const filterUserForClient = (user: User) => ({
   id: user.id,
   username: user.username,
@@ -18,6 +24,7 @@ const filterUserForClient = (user: User) => ({
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { type Post } from "@prisma/client";
+import { LRUCache } from "lru-cache";
 
 const addUserDataToPosts = async (posts: Post[]) => {
   const users = (
@@ -52,8 +59,24 @@ const ratelimit = new Ratelimit({
   analytics: true,
 });
 
+type PostWithAuthor = {
+  post: Post;
+  author: {
+    id: string;
+    username: string;
+    profilePicture: string;
+  };
+};
+
 export const postsRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
+    const postsInCache = cache.get("posts") as PostWithAuthor[];
+
+    if (postsInCache) {
+      console.log("returning from cache");
+      return postsInCache;
+    }
+
     const posts = await ctx.prisma.post.findMany({
       take: 100,
       orderBy: {
@@ -61,7 +84,10 @@ export const postsRouter = createTRPCRouter({
       },
     });
 
-    return await addUserDataToPosts(posts);
+    console.log("returning from db");
+    const postsWithUserData = await addUserDataToPosts(posts);
+    cache.set("posts", postsWithUserData);
+    return postsWithUserData;
   }),
 
   getPostsByUserId: publicProcedure
@@ -70,18 +96,26 @@ export const postsRouter = createTRPCRouter({
         userId: z.string(),
       })
     )
-    .query(({ ctx, input }) => {
-      return ctx.prisma.post
-        .findMany({
-          where: {
-            authorId: input.userId,
-          },
-          take: 100,
-          orderBy: {
-            createdAt: "desc",
-          },
-        })
-        .then(addUserDataToPosts);
+    .query(async ({ ctx, input }) => {
+      if (cache.has(input.userId)) {
+        console.log("returning from cache");
+        return cache.get(input.userId);
+      }
+
+      const posts = await ctx.prisma.post.findMany({
+        where: {
+          authorId: input.userId,
+        },
+        take: 100,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      console.log("returning from db");
+      const postsWithUserData = await addUserDataToPosts(posts);
+      cache.set(input.userId, postsWithUserData);
+      return postsWithUserData;
     }),
 
   create: authedProcedure

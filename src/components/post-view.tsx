@@ -7,7 +7,6 @@ import Link from "next/link";
 dayjs.extend(relativeTime);
 
 type PostWithUser = RouterOutputs["posts"]["getAll"][number];
-
 export const PostView = (props: PostWithUser) => {
   return (
     <li
