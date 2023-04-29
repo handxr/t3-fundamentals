@@ -99,7 +99,7 @@ export const postsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       if (cache.has(input.userId)) {
         console.log("returning from cache");
-        return cache.get(input.userId);
+        return cache.get(input.userId) as PostWithAuthor[];
       }
 
       const posts = await ctx.prisma.post.findMany({
