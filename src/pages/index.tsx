@@ -7,6 +7,7 @@ import { type RouterOutputs, api } from "@/utils/api";
 import Image from "next/image";
 import { LoadingPage } from "@/components/loading";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 dayjs.extend(relativeTime);
 
@@ -67,11 +68,15 @@ const PostView = (props: PostWithUser) => {
       />
       <div className="flex flex-col">
         <div className="flex gap-2">
-          <span className="font-bold text-slate-300">{`@${props.author.username}`}</span>{" "}
+          <Link href={`/@${props.author.username}`}>
+            <span className="font-bold text-slate-300">{`@${props.author.username}`}</span>{" "}
+          </Link>
           ·{" "}
-          <span className="text-slate-300">
-            {dayjs(props.post.createdAt).fromNow()}
-          </span>
+          <Link href={`/post/${props.post.id}`}>
+            <span className="text-slate-300">
+              {dayjs(props.post.createdAt).fromNow()}
+            </span>
+          </Link>
         </div>
         <span>{props.post.content}</span>
       </div>
