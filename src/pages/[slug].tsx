@@ -2,6 +2,24 @@ import { api } from "@/utils/api";
 import { type GetStaticProps, type NextPage } from "next";
 import Head from "next/head";
 
+const ProfileFeed = (props: { userId: string }) => {
+  const { data, isLoading } = api.posts.getPostsByUserId.useQuery({
+    userId: props.userId,
+  });
+
+  if (isLoading) return <LoadingPage />;
+
+  if (!data) return null;
+
+  return (
+    <ul className="flex flex-col">
+      {data.map((post) => (
+        <PostView key={post.post.id} {...post} />
+      ))}
+    </ul>
+  );
+};
+
 const ProfilePage: NextPage<{ username: string }> = ({ username }) => {
   const { data, isError, error } = api.profile.getUserByUsername.useQuery({
     username,
@@ -33,6 +51,7 @@ const ProfilePage: NextPage<{ username: string }> = ({ username }) => {
           data.username || ""
         }`}</div>
         <div className="w-full border-b border-slate-400"></div>
+        <ProfileFeed userId={data.id} />
       </Layout>
     </>
   );
@@ -42,7 +61,7 @@ import { createServerSideHelpers } from "@trpc/react-query/server";
 import { appRouter } from "@/server/api/root";
 import { prisma } from "@/server/db";
 import superjson from "superjson";
-import { Layout } from "@/components";
+import { Layout, LoadingPage, PostView } from "@/components";
 import Image from "next/image";
 
 export const getStaticProps: GetStaticProps = async (context) => {
@@ -60,6 +79,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const username = slug.replace("@", "");
 
   await helpers.profile.getUserByUsername.prefetch({ username });
+  await helpers.posts.getPostsByUserId.prefetch({ userId: username });
 
   return {
     props: {
