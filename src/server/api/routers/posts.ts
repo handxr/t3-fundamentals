@@ -9,6 +9,12 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { type User } from "@clerk/nextjs/dist/api";
 import { TRPCError } from "@trpc/server";
 
+const cache = new LRUCache({
+  max: 500,
+  ttl: 1000 * 10,
+  updateAgeOnGet: true,
+});
+
 const filterUserForClient = (user: User) => ({
   id: user.id,
   username: user.username,
@@ -64,6 +70,13 @@ type PostWithAuthor = {
 
 export const postsRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
+    const postsInCache = cache.get("posts") as PostWithAuthor[];
+
+    if (postsInCache) {
+      console.log("returning from cache");
+      return postsInCache;
+    }
+
     const posts = await ctx.prisma.post.findMany({
       take: 100,
       orderBy: {
@@ -71,8 +84,9 @@ export const postsRouter = createTRPCRouter({
       },
     });
 
+    console.log("returning from db");
     const postsWithUserData = await addUserDataToPosts(posts);
-
+    cache.set("posts", postsWithUserData);
     return postsWithUserData;
   }),
 
@@ -83,6 +97,11 @@ export const postsRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      if (cache.has(input.userId)) {
+        console.log("returning from cache");
+        return cache.get(input.userId) as PostWithAuthor[];
+      }
+
       const posts = await ctx.prisma.post.findMany({
         where: {
           authorId: input.userId,
@@ -95,7 +114,7 @@ export const postsRouter = createTRPCRouter({
 
       console.log("returning from db");
       const postsWithUserData = await addUserDataToPosts(posts);
-
+      cache.set(input.userId, postsWithUserData);
       return postsWithUserData;
     }),
 
@@ -116,6 +135,9 @@ export const postsRouter = createTRPCRouter({
           message: "You are doing that too much. Try again later.",
         });
       }
+
+      console.log("deleting from cache");
+      cache.delete("posts");
 
       const post = await ctx.prisma.post.create({
         data: {
