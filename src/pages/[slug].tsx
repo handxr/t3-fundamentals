@@ -79,7 +79,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const username = slug.replace("@", "");
 
   await helpers.profile.getUserByUsername.prefetch({ username });
-  await helpers.posts.getPostsByUserId.prefetch({ userId: username });
 
   return {
     props: {
