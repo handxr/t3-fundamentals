@@ -4,8 +4,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import Link from "next/link";
 
-dayjs.extend(relativeTime);
-
 type PostWithUser = RouterOutputs["posts"]["getAll"][number];
 export const PostView = (props: PostWithUser) => {
   return (
@@ -14,7 +12,7 @@ export const PostView = (props: PostWithUser) => {
       className="flex items-center gap-4 border-b border-slate-400 p-8"
     >
       <Image
-        src={props.author.profilePicture}
+        src={props.author.profilePicture ?? ""}
         alt="Profile Image"
         className="h-12 w-12 rounded-full"
         width={48}
@@ -26,9 +24,6 @@ export const PostView = (props: PostWithUser) => {
             <span className="font-bold text-slate-300">{`@${props.author.username}`}</span>{" "}
           </Link>
           ·{" "}
-          <span className="text-slate-300">
-            {dayjs(props.post.createdAt).fromNow()}
-          </span>
         </div>
         <span>{props.post.content}</span>
       </div>

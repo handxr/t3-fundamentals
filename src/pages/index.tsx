@@ -60,9 +60,9 @@ const Feed = () => {
 
   return (
     <ul className="flex flex-col">
-      {/* {data.map((item) => (
+      {data.map((item) => (
         <PostView key={item.post.id} {...item} />
-      ))} */}
+      ))}
     </ul>
   );
 };
