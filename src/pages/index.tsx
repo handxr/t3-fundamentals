@@ -83,11 +83,11 @@ const Home: NextPage = () => {
       <main className="flex min-h-screen justify-center ">
         <div className="w-full border-x border-slate-400  md:max-w-2xl">
           <div className="j flex border-b border-slate-400 p-4">
-            {isSignedIn ? (
+            {/* {isSignedIn ? (
               <CreatePostWizard />
             ) : (
               <SignInButton>Login</SignInButton>
-            )}
+            )} */}
           </div>
           <Feed />
         </div>
