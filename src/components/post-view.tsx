@@ -18,7 +18,7 @@ export const PostView = (props: PostWithUser) => {
         width={48}
         height={48}
       />
-      <div className="flex flex-col">
+      {/* <div className="flex flex-col">
         <div className="flex gap-2">
           <Link href={`/@${props.author.username}`}>
             <span className="font-bold text-slate-300">{`@${props.author.username}`}</span>{" "}
@@ -26,7 +26,7 @@ export const PostView = (props: PostWithUser) => {
           ·{" "}
         </div>
         <span>{props.post.content}</span>
-      </div>
+      </div> */}
     </li>
   );
 };
