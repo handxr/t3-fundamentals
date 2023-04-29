@@ -9,12 +9,6 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { type User } from "@clerk/nextjs/dist/api";
 import { TRPCError } from "@trpc/server";
 
-const cache = new LRUCache({
-  max: 500,
-  ttl: 1000 * 10,
-  updateAgeOnGet: true,
-});
-
 const filterUserForClient = (user: User) => ({
   id: user.id,
   username: user.username,
@@ -70,6 +64,11 @@ type PostWithAuthor = {
 
 export const postsRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
+    const cache = new LRUCache({
+      max: 500,
+      ttl: 1000 * 10,
+      updateAgeOnGet: true,
+    });
     const postsInCache = cache.get("posts") as PostWithAuthor[];
 
     if (postsInCache) {
@@ -97,6 +96,11 @@ export const postsRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      const cache = new LRUCache({
+        max: 500,
+        ttl: 1000 * 10,
+        updateAgeOnGet: true,
+      });
       if (cache.has(input.userId)) {
         console.log("returning from cache");
         return cache.get(input.userId) as PostWithAuthor[];
